@@ -16,8 +16,7 @@ mod tests {
 
     fn namespace_def() -> NamespaceDef {
         let ndef = NamespaceDef {
-            namespace: "engine",
-            resources: [
+            namespace: "engine", resources: [
                 TestResource::Model(m_Matchmaker::TEST_CLASS_HASH),
                 TestResource::Model(m_Board::TEST_CLASS_HASH),
                 TestResource::Model(m_Player::TEST_CLASS_HASH),
@@ -26,8 +25,7 @@ mod tests {
                 TestResource::Event(e_Marked::TEST_CLASS_HASH),
                 TestResource::Event(e_Ended::TEST_CLASS_HASH),
                 TestResource::Contract(actions::TEST_CLASS_HASH),
-            ]
-                .span(),
+            ].span(),
         };
 
         ndef
@@ -37,8 +35,7 @@ mod tests {
         [
             ContractDefTrait::new(@"engine", @"actions")
                 .with_writer_of([dojo::utils::bytearray_hash(@"engine")].span())
-        ]
-            .span()
+        ].span()
     }
 
 
