@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { MusicProvider } from "./context/MusicContext";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,15 +21,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        {/* Wrapped the children with MusicProvider so that the sound can be accessed globally */}
+        <MusicProvider>
+          {children}
+        </MusicProvider>
       </body>
     </html>
   );
