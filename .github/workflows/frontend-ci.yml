@@ -31,9 +31,9 @@ jobs:
       - name: Lint
         run: |
           cd client
-          pnpm run lint-c
+          pnpm run lint
 
       - name: Build
         run: |
           cd client
-          pnpm run build-c
+          pnpm run build
