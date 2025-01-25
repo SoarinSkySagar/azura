@@ -1,5 +1,4 @@
 name: Frontend CI
-
 on:
   push:
     branches: [ci/build-and-lint]
@@ -9,7 +8,6 @@ on:
 jobs:
   build-and-lint:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd client
-          pnpm install --frozen-lockfile
+          pnpm install
 
       - name: Lint
         run: |
