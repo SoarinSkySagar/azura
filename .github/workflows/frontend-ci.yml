@@ -2,9 +2,9 @@ name: Frontend CI
 
 on:
   push:
-    branches: [ ci/build-and-lint ]
+    branches: [ci/build-and-lint]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-lint:
@@ -22,16 +22,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          cd client
+          pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm run lint-e
+        run: |
+          cd client
+          pnpm run lint-c
 
       - name: Build
-        run: pnpm run build-c
-
-
+        run: |
+          cd client
+          pnpm run build-c
