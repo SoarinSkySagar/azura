@@ -1,7 +1,7 @@
 name: Frontend CI
 on:
   push:
-    branches: [ci/build-and-lint]
+    branches: [main]
   pull_request:
     branches: [main]
 
