@@ -64,7 +64,7 @@ mod ERC721 {
         owner: ContractAddress,
         token_name: ByteArray,
         token_symbol: ByteArray,
-        base_uri: ByteArray
+        base_uri: ByteArray,
     ) {
         self.erc721.initializer(token_name, token_symbol, base_uri);
         self.ownable.initializer(owner);

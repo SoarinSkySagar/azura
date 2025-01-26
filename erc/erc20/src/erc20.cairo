@@ -10,7 +10,7 @@ pub trait IERC20<TContractState> {
     fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
     fn transfer_from(
-        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
+        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256,
     ) -> bool;
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
 }
@@ -94,7 +94,7 @@ mod erc20 {
         }
 
         fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress
+            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
         ) -> u256 {
             self.allowances.entry((owner, spender)).read()
         }
@@ -109,7 +109,7 @@ mod erc20 {
             ref self: ContractState,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) -> bool {
             let caller = get_caller_address();
             self._spend_allowance(sender, caller, amount);
@@ -142,7 +142,7 @@ mod erc20 {
         }
 
         fn update(
-            ref self: ContractState, from: ContractAddress, to: ContractAddress, amount: u256
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, amount: u256,
         ) {
             if (from == Zero::zero()) {
                 let total_supply = self.total_supply.read();
@@ -168,7 +168,7 @@ mod erc20 {
             ref self: ContractState,
             sender: ContractAddress,
             recipient: ContractAddress,
-            amount: u256
+            amount: u256,
         ) {
             assert!(!sender.is_zero(), "ERC20: transfer from the zero address");
             assert!(!recipient.is_zero(), "ERC20: transfer to the zero address");
@@ -176,7 +176,7 @@ mod erc20 {
         }
 
         fn _approve(
-            ref self: ContractState, owner: ContractAddress, spender: ContractAddress, amount: u256
+            ref self: ContractState, owner: ContractAddress, spender: ContractAddress, amount: u256,
         ) {
             assert!(!owner.is_zero(), "ERC20: approve from the zero address");
             assert!(!spender.is_zero(), "ERC20: approve to the zero address");
@@ -185,7 +185,7 @@ mod erc20 {
         }
 
         fn _spend_allowance(
-            ref self: ContractState, owner: ContractAddress, spender: ContractAddress, amount: u256
+            ref self: ContractState, owner: ContractAddress, spender: ContractAddress, amount: u256,
         ) {
             let current_allowance = self.allowances.entry((owner, spender)).read();
             if current_allowance != Bounded::MAX {

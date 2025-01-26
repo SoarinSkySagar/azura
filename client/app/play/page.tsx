@@ -1,44 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
-
-interface SquareProps {
-  value: string | null;
-  onClick: () => void;
-  winningSquare: boolean;
-}
-
-const Square: React.FC<SquareProps> = ({ value, onClick, winningSquare }) => (
-  <motion.button
-    onClick={onClick}
-    className={`w-20 h-20 md:w-24 md:h-24 border-4 text-4xl font-bold flex items-center justify-center rounded-lg shadow-lg
-      ${
-        winningSquare
-          ? "bg-yellow-300 border-yellow-500 text-orange-700 dark:bg-gray-900 dark:border-slate-300 dark:text-orange-200"
-          : "bg-white border-orange-500 hover:bg-orange-100 dark:bg-[#0a192f] dark:border-red-700 dark:hover:bg-gray-800"
-      }`}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-  >
-    {value && (
-      <motion.span
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        className={
-          value === "X"
-            ? "text-blue-600 dark:text-blue-400"
-            : "text-red-600 dark:text-red-400"
-        }
-      >
-        {value}
-      </motion.span>
-    )}
-  </motion.button>
-);
+// import Square from './Square';
+import GameBoard from './components/GameBoard';
+import GameScores from './components/GameScores';
+import GameStatus from './components/GameStatus';
 
 const TicTacToe = () => {
   const [squares, setSquares] = useState<(string | null)[]>(
@@ -138,75 +106,23 @@ const TicTacToe = () => {
             Tic Tac Toe
           </motion.h1>
 
-          <motion.div
-            className="grid grid-cols-3 gap-2 mb-8"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-          >
-            {squares.map((square, i) => (
-              <Square
-                key={i}
-                value={square}
-                onClick={() => handleClick(i)}
-                winningSquare={winner?.line?.includes(i) ?? false}
-              />
-            ))}
-          </motion.div>
+          <GameBoard 
+            squares={squares} 
+            onClick={handleClick} 
+            winner={winner} 
+          />
 
-          <AnimatePresence mode="wait">
-            {showWinnerAlert && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="bg-orange-500 dark:bg-red-600 text-gray-800 dark:text-gray-100 py-2 px-4 rounded-lg mb-4 font-bold text-lg shadow-lg"
-              >
-                {showWinnerAlert}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <GameStatus 
+            winner={winner} 
+            isDraw={isDraw} 
+            xIsNext={xIsNext} 
+            showWinnerAlert={showWinnerAlert} 
+          />
 
-          <motion.div className="flex justify-center space-x-8 mb-8">
-            <div className="text-center">
-              <span className="text-xl font-bold text-blue-700 dark:text-blue-400">
-                X Score:
-              </span>
-              <motion.span
-                key={xScore}
-                className="ml-2 text-2xl"
-                initial={{ scale: 1.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-              >
-                {xScore}
-              </motion.span>
-            </div>
-            <div className="text-center">
-              <span className="text-xl font-bold text-red-700 dark:text-red-400">
-                O Score:
-              </span>
-              <motion.span
-                key={oScore}
-                className="ml-2 text-2xl"
-                initial={{ scale: 1.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-              >
-                {oScore}
-              </motion.span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="h-8 text-xl text-gray-100"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            key={winner?.winner || isDraw ? "result" : "next"}
-          >
-            {winner
-              ? `Winner: ${winner.winner}`
-              : isDraw
-              ? "Draw!"
-              : `Next player: ${xIsNext ? "X" : "O"}`}
-          </motion.div>
+          <GameScores 
+            xScore={xScore} 
+            oScore={oScore} 
+          />
 
           <motion.button
             onClick={resetGame}

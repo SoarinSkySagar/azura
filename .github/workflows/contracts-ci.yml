@@ -1,4 +1,4 @@
-name: Dojo Contracts CI
+name: Contracts CI
 on:
    push:
        branches: ["main"]
@@ -24,10 +24,14 @@ jobs:
              run: |
                 asdf plugin add scarb
                 asdf install scarb latest
+                asdf install scarb 2.8.4
                 asdf global scarb latest
                 asdf plugin add dojo https://github.com/dojoengine/asdf-dojo
                 asdf install dojo latest 
                 asdf global dojo latest
+                asdf plugin add starknet-foundry
+                asdf install starknet-foundry latest
+                asdf global starknet-foundry latest
            
            - name: Build contracts
              run: |
@@ -42,4 +46,19 @@ jobs:
            - name: Check formatting
              run: |
                 cd engine
+                scarb fmt --check
+
+           - name: ERC20
+             run: |
+                cd erc/erc20
+                scarb build
+                scarb test
+                scarb fmt --check
+
+           - name: ERC721
+             run: |
+                cd erc/erc721
+                asdf global scarb 2.8.4
+                scarb build
+                scarb test
                 scarb fmt --check
