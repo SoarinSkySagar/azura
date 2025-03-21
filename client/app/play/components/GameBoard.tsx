@@ -15,13 +15,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ squares, onClick, winner }) => {
   const getBoardStyles = () => {
     if (theme === 'vanilla') {
       return {
-        className: "grid grid-cols-3 gap-2 mb-8",
+        className: "grid grid-cols-9 gap-1 mb-8",
         style: {}
       };
     }
 
     return {
-      className: "grid grid-cols-3 gap-2 mb-8 p-4 rounded-lg",
+      className: "grid grid-cols-9 gap-1 mb-8 p-4 rounded-lg",
       style: {
         backgroundColor: 'var(--board-bg)',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
