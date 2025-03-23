@@ -1,7 +1,15 @@
 "use client";
 
 import { sepolia, mainnet, Chain } from "@starknet-react/chains";
-import { StarknetConfig, voyager, jsonRpcProvider } from "@starknet-react/core";
+import { 
+  StarknetConfig,
+  voyager,
+  jsonRpcProvider,
+  useInjectedConnectors,
+  argent,
+  braavos,
+} from "@starknet-react/core";
+import { WebWalletConnector } from "starknetkit/webwallet";
 import { constants } from "starknet";
 import { ControllerConnector } from "@cartridge/connector";
 import { DojoSdkProvider } from "@dojoengine/sdk/react";
@@ -94,6 +102,12 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
       })
   );
 
+  const { connectors: injectedConnectors } = useInjectedConnectors({
+    recommended: [argent(), braavos()],
+    includeRecommended: "onlyIfNoConnectors",
+    order: "alphabetical",
+  });
+
   useMountEffect(actions.execute);
 
   if (!state.result) return;
@@ -108,7 +122,11 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
         autoConnect
         chains={[sepolia]}
         provider={provider}
-        connectors={[cartridgeConnector, session]}
+        connectors={[
+          cartridgeConnector,
+          ...injectedConnectors,
+          new WebWalletConnector({ url: "https://web.argent.xyz" }),
+        ]}
         explorer={voyager}
       >
         {children}

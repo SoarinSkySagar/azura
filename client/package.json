@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev-https": "next dev --turbopack --experimental-https",
-    "build": "next build", 
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -26,6 +26,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "starknet": "^6.11.0",
+    "starknetkit": "^2.6.1",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useClientOnly } from "./hooks/useClientOnly";
 import MusicToggleButton from "./components/MusicToggle";
 import { JoinRoomModal } from "./components/JoinRoomModal";
+import { useRouter } from "next/navigation";
 
 export default function TicTacToeLanding() {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -135,6 +136,8 @@ function GameControls({
   handleJoinGame: () => void;
   handleRandomMatch: () => void;
 }) {
+  const router = useRouter();
+
   return (
     <div className="mt-8 md:mt-0 z-10">
       <motion.h1
@@ -189,6 +192,17 @@ function GameControls({
           aria-label="Play Random Match"
         >
           Play
+        </GameButton>
+
+        <GameButton
+          onClick={() => router.push('/stake')}
+          className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1, duration: 0.5 }}
+          aria-label="Stake STRK Tokens"
+        >
+          Stake STRK
         </GameButton>
       </div>
     </div>
