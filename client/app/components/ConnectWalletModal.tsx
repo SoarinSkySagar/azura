@@ -8,7 +8,6 @@ import { useConnect, Connector } from "@starknet-react/core";
 interface ConnectWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
-  policies?: any;
 }
 
 const walletIdToName = new Map([
@@ -22,7 +21,6 @@ const walletIdToName = new Map([
 const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({ 
   isOpen, 
   onClose,
-  policies
 }) => {
   const { connectors, connect } = useConnect();
   const [pendingConnectorId, setPendingConnectorId] = useState<string | undefined>(undefined);

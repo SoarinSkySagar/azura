@@ -18,7 +18,6 @@ import { SchemaType } from "../dojo/typescript/models.gen";
 import { setupWorld } from "../dojo/typescript/contracts.gen";
 import { dojoConfig } from "../dojo/dojo.config";
 import { SessionPolicies } from "@cartridge/controller";
-import SessionConnector from "@cartridge/connector/session";
 import { useAsync, useMountEffect } from "@react-hookz/web";
 import { getContractByName } from "@dojoengine/core";
 import manifest from "../dojo/manifest_dev.json";
@@ -63,14 +62,6 @@ const cartridgeConnector = new ControllerConnector({
   defaultChainId: constants.StarknetChainId.SN_SEPOLIA,
 })
 
-const session = new SessionConnector({
-  policies,
-  rpc:
-    process.env.NEXT_PUBLIC_RPC_SEPOLIA ??
-    "https://api.cartridge.gg/x/starknet/sepolia",
-  chainId: constants.StarknetChainId.SN_SEPOLIA,
-  redirectUrl: typeof window !== "undefined" ? window.location.origin : "",
-});
 
 const provider = jsonRpcProvider({
   rpc: (chain: Chain) => {

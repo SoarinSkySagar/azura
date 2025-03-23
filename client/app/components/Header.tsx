@@ -3,21 +3,18 @@
 import { motion } from "framer-motion";
 import {
   useAccount,
-  useConnect,
   useDisconnect,
   useNetwork,
   useSwitchChain,
 } from "@starknet-react/core";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import { constants, num } from "starknet";
 import { Chain } from "@starknet-react/chains";
-import { ControllerConnector } from "@cartridge/connector";
 import { useClickOutside } from '@react-hookz/web';
 import { ChevronDown, Wallet } from "lucide-react";
 import ConnectWalletModal from "./ConnectWalletModal";
 
 const Header = () => {
-  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { chain, chains } = useNetwork();
   const { address, status, isConnected } = useAccount();
@@ -32,11 +29,6 @@ const Header = () => {
 
   const networkRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const profileRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
-  
-  const controllerConnector = useMemo(
-    () => ControllerConnector.fromConnectors(connectors),
-    [connectors],
-  );
 
   useClickOutside(networkRef, () => setNetworkOpen(false));
   useClickOutside(profileRef, () => setProfileOpen(false));

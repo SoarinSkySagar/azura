@@ -1,4 +1,4 @@
-import GameResult from '@/app/models/gameResult';
+import GameResult from '@/app/models/GameResult';
 import connectDB from '@/app/utils/db';
 import type { NextApiRequest, NextApiResponse } from 'next';
 

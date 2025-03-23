@@ -5,6 +5,7 @@ import { MusicProvider } from "./context/MusicContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { StarknetProvider } from "./components/StarknetProvider";
 import Header from "./components/Header";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+      <Suspense fallback={<div>Loading...</div>}>
         <ThemeProvider>
           <StarknetProvider>
             <MusicProvider>
@@ -39,6 +41,7 @@ export default function RootLayout({
             </MusicProvider>
           </StarknetProvider>
         </ThemeProvider>
+      </Suspense>
       </body>
     </html>
   );

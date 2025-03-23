@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Position as DojoPosition } from '../dojo/bindings/models.gen';
+import { Position as DojoPosition } from '../dojo/typescript/models.gen';
 
 type Position = {
     i: number,
