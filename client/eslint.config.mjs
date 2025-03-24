@@ -11,6 +11,18 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    // This is an auto-generated file by dojo, so we need to disable some rules
+    files: ["app/dojo/typescript/contracts.gen.ts"],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+    linterOptions: {
+      noInlineConfig: true,
+      reportUnusedDisableDirectives: false
+    },
+  },
 ];
 
 export default eslintConfig;

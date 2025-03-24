@@ -9,7 +9,7 @@ import { useTheme } from '../components/ThemeProvider';
 
 const TicTacToe = () => {
   const [squares, setSquares] = useState<(string | null)[]>(
-    Array(9).fill(null)
+    Array(81).fill(null)
   );
   const [xIsNext, setXIsNext] = useState(true);
   const [xScore, setXScore] = useState(0);
@@ -18,24 +18,51 @@ const TicTacToe = () => {
   const { theme } = useTheme();
 
   const calculateWinner = (squares: (string | null)[]) => {
-    const lines = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
-    ];
+    // Rows
+    const lines = [];
+    
+    // Horizontal lines (rows)
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col <= 4; col++) {
+        const start = row * 9 + col;
+        lines.push([start, start + 1, start + 2, start + 3, start + 4]);
+      }
+    }
+    
+    // Vertical lines (columns)
+    for (let col = 0; col < 9; col++) {
+      for (let row = 0; row <= 4; row++) {
+        const start = row * 9 + col;
+        lines.push([start, start + 9, start + 18, start + 27, start + 36]);
+      }
+    }
+    
+    // Diagonal lines (top-left to bottom-right)
+    for (let row = 0; row <= 4; row++) {
+      for (let col = 0; col <= 4; col++) {
+        const start = row * 9 + col;
+        lines.push([start, start + 10, start + 20, start + 30, start + 40]);
+      }
+    }
+    
+    // Diagonal lines (top-right to bottom-left)
+    for (let row = 0; row <= 4; row++) {
+      for (let col = 4; col < 9; col++) {
+        const start = row * 9 + col;
+        lines.push([start, start + 8, start + 16, start + 24, start + 32]);
+      }
+    }
 
-    for (const [a, b, c] of lines) {
+    for (const line of lines) {
+      const [a, b, c, d, e] = line;
       if (
         squares[a] &&
         squares[a] === squares[b] &&
-        squares[a] === squares[c]
+        squares[a] === squares[c] &&
+        squares[a] === squares[d] &&
+        squares[a] === squares[e]
       ) {
-        return { winner: squares[a], line: [a, b, c] };
+        return { winner: squares[a], line: [a, b, c, d, e] };
       }
     }
     return null;
@@ -66,7 +93,7 @@ const TicTacToe = () => {
   };
 
   const resetGame = () => {
-    setSquares(Array(9).fill(null));
+    setSquares(Array(81).fill(null));
     setXIsNext(true);
     setShowWinnerAlert(null);
   };
@@ -140,15 +167,19 @@ const TicTacToe = () => {
   return (
     <div className="min-h-screen">
       <div className={containerStyles.className} style={containerStyles.style}>
-        <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-screen">
+        <div className="container mx-auto px-4 py-4 flex flex-col items-center justify-center min-h-screen">
           <motion.h1
             className={titleStyles.className}
             style={titleStyles.style}
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
           >
-            Tic Tac Toe
+            Tic Tac Toe 9x9
           </motion.h1>
+
+          <p className="text-center mb-4 text-sm md:text-base">
+            Get 5 in a row to win!
+          </p>
 
           <GameBoard 
             squares={squares} 

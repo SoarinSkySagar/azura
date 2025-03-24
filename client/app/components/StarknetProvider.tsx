@@ -1,7 +1,15 @@
 "use client";
 
 import { sepolia, mainnet, Chain } from "@starknet-react/chains";
-import { StarknetConfig, voyager, jsonRpcProvider } from "@starknet-react/core";
+import { 
+  StarknetConfig,
+  voyager,
+  jsonRpcProvider,
+  useInjectedConnectors,
+  argent,
+  braavos,
+} from "@starknet-react/core";
+import { WebWalletConnector } from "starknetkit/webwallet";
 import { constants } from "starknet";
 import { ControllerConnector } from "@cartridge/connector";
 import { DojoSdkProvider } from "@dojoengine/sdk/react";
@@ -10,7 +18,6 @@ import { SchemaType } from "../dojo/typescript/models.gen";
 import { setupWorld } from "../dojo/typescript/contracts.gen";
 import { dojoConfig } from "../dojo/dojo.config";
 import { SessionPolicies } from "@cartridge/controller";
-import SessionConnector from "@cartridge/connector/session";
 import { useAsync, useMountEffect } from "@react-hookz/web";
 import { getContractByName } from "@dojoengine/core";
 import manifest from "../dojo/manifest_dev.json";
@@ -55,14 +62,6 @@ const cartridgeConnector = new ControllerConnector({
   defaultChainId: constants.StarknetChainId.SN_SEPOLIA,
 })
 
-const session = new SessionConnector({
-  policies,
-  rpc:
-    process.env.NEXT_PUBLIC_RPC_SEPOLIA ??
-    "https://api.cartridge.gg/x/starknet/sepolia",
-  chainId: constants.StarknetChainId.SN_SEPOLIA,
-  redirectUrl: typeof window !== "undefined" ? window.location.origin : "",
-});
 
 const provider = jsonRpcProvider({
   rpc: (chain: Chain) => {
@@ -94,6 +93,12 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
       })
   );
 
+  const { connectors: injectedConnectors } = useInjectedConnectors({
+    recommended: [argent(), braavos()],
+    includeRecommended: "onlyIfNoConnectors",
+    order: "alphabetical",
+  });
+
   useMountEffect(actions.execute);
 
   if (!state.result) return;
@@ -108,7 +113,11 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
         autoConnect
         chains={[sepolia]}
         provider={provider}
-        connectors={[cartridgeConnector, session]}
+        connectors={[
+          cartridgeConnector,
+          ...injectedConnectors,
+          new WebWalletConnector({ url: "https://web.argent.xyz" }),
+        ]}
         explorer={voyager}
       >
         {children}

@@ -1,27 +1,43 @@
 import type { NextConfig } from "next";
-import type { Configuration } from "webpack";
 
 const nextConfig: NextConfig = {
-  webpack: (config: Configuration, { isServer }) => {
+  reactStrictMode: true,
+  webpack: (config, { isServer, dev }) => {
+    // Enable WebAssembly
     config.experiments = {
+      ...config.experiments,
       asyncWebAssembly: true,
-      layers: true,
+      topLevelAwait: true,
     };
  
-    if (isServer) {
-      config.module = config.module || {};
-      config.module.rules = config.module.rules || [];
-    
-      config.module.rules.push({
-        test: /\.wasm$/,
-        type: "javascript/auto",
-        use: "null-loader",
-      });
+    // Fix for WebAssembly in production builds
+    if (!dev && isServer) {
+      config.output.webassemblyModuleFilename = "chunks/[id].wasm";
+      config.plugins.push(new WasmChunksFixPlugin());
     }
-    
-
+ 
     return config;
   },
+};
+ 
+// Plugin to fix WASM chunk loading in production
+class WasmChunksFixPlugin {
+  apply(compiler: any) {
+    compiler.hooks.thisCompilation.tap("WasmChunksFixPlugin", (compilation: any) => {
+      compilation.hooks.processAssets.tap(
+        { name: "WasmChunksFixPlugin" },
+        (assets: any) =>
+          Object.entries(assets).forEach(([pathname, source]) => {
+            if (!pathname.match(/\.wasm$/)) return;
+            compilation.deleteAsset(pathname);
+ 
+            const name = pathname.split("/")[1];
+            const info = compilation.assetsInfo.get(pathname);
+            compilation.emitAsset(name, source, info);
+          }),
+      );
+    });
+  }
 };
 
 export default nextConfig;
