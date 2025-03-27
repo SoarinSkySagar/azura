@@ -68,17 +68,59 @@ mod tests {
         GameContext { world, play_dispatcher, start_dispatcher, board_dispatcher }
     }
 
-    fn init_default_game(dispatcher: IStartDispatcher) -> (ContractAddress, ContractAddress) {
-        let player_1 = contract_address_const::<'PLAYER 1'>();
-        let player_2 = contract_address_const::<'PLAYER 2'>();
-
-        testing::set_contract_address(player_1);
+    fn init_default_game(
+        dispatcher: IStartDispatcher,
+    ) -> (
+        ContractAddress,
+        ContractAddress,
+        ContractAddress,
+        ContractAddress,
+        ContractAddress,
+        ContractAddress,
+        ContractAddress,
+        ContractAddress,
+        ContractAddress,
+    ) {
+        // Player 1 starts the game.
+        let player1 = contract_address_const::<'PLAYER 1'>();
+        testing::set_contract_address(player1);
         let match_id: u32 = 123456;
         dispatcher.start();
-        testing::set_contract_address(player_2);
+
+        // The remaining 8 players join the match.
+        let player2 = contract_address_const::<'PLAYER 2'>();
+        testing::set_contract_address(player2);
         dispatcher.join(match_id);
 
-        (player_1, player_2)
+        let player3 = contract_address_const::<'PLAYER 3'>();
+        testing::set_contract_address(player3);
+        dispatcher.join(match_id);
+
+        let player4 = contract_address_const::<'PLAYER 4'>();
+        testing::set_contract_address(player4);
+        dispatcher.join(match_id);
+
+        let player5 = contract_address_const::<'PLAYER 5'>();
+        testing::set_contract_address(player5);
+        dispatcher.join(match_id);
+
+        let player6 = contract_address_const::<'PLAYER 6'>();
+        testing::set_contract_address(player6);
+        dispatcher.join(match_id);
+
+        let player7 = contract_address_const::<'PLAYER 7'>();
+        testing::set_contract_address(player7);
+        dispatcher.join(match_id);
+
+        let player8 = contract_address_const::<'PLAYER 8'>();
+        testing::set_contract_address(player8);
+        dispatcher.join(match_id);
+
+        let player9 = contract_address_const::<'PLAYER 9'>();
+        testing::set_contract_address(player9);
+        dispatcher.join(match_id);
+
+        (player1, player2, player3, player4, player5, player6, player7, player8, player9)
     }
 
     /// TESTS
@@ -93,10 +135,13 @@ mod tests {
 
         // The public start function uses a hardcoded match_id 123456 when creating a new board
         let board: Board = context.world.read_model(123456);
-        // Board.x is set to the caller
-        assert(board.x == player1, 'P1 not X');
+
+        let players = board.players;
+
+        // Board.players[0] is set to the caller
+        assert(*players[0] == player1, 'P1 not in first index');
         // Board.ready flag is false, since we're waiting for a second player
-        assert(!board.ready, 'Board not ready');
+        assert(!board.ready, 'Board is ready');
 
         // Check matchmaker state recorded under key 1
         let matchmaker: Matchmaker = context.world.read_model(1);
@@ -118,14 +163,15 @@ mod tests {
         testing::set_contract_address(player2);
         context.start_dispatcher.join(123456);
 
-        // Read board to confirm player2 was added as O and board is updated.
+        // Read board to confirm player2 was added in second index and board is updated.
         let board: Board = context.world.read_model(123456);
-        assert(board.o == player2, 'P2 not O');
-        assert(board.ready, 'Board not ready');
+
+        assert(*board.players[1] == player2, 'P1 not in second index');
+        assert(!board.ready, 'Board is ready');
 
         // Check the matchmaker is updated to mark the board ready.
         let matchmaker: Matchmaker = context.world.read_model(1);
-        assert(matchmaker.last_board_ready, 'Last flag false');
+        assert(!matchmaker.last_board_ready, 'Last flag false');
     }
 
     #[test]
@@ -141,11 +187,12 @@ mod tests {
         let match_id = matchmaker.last_board;
         let board: Board = context.world.read_model(match_id);
         // Private match assigns the caller as X and marks the board as immediately ready.
-        assert(board.x == player1, 'P1 not X');
+        assert(*board.players[0] == player1, 'P1 not in first index');
         assert(board.ready, 'Board not ready');
 
         // Read player info
         let player_info: Player = context.world.read_model(match_id);
+
         // In private mode the starting player does not take the turn immediately.
         assert(!player_info.turn, 'Turn flag error');
     }
@@ -174,22 +221,16 @@ mod tests {
     #[test]
     fn test_start_after_full_match() {
         let mut context = setup_world();
-        let player1 = contract_address_const::<'PLAYER1'>();
-        let player2 = contract_address_const::<'PLAYER2'>();
-        let player3 = contract_address_const::<'PLAYER3'>();
+        let (_, _, _, _, _, _, _, _, _) = init_default_game(context.start_dispatcher);
 
-        // First game: p1 starts and p2 joins.
-        testing::set_contract_address(player1);
-        context.start_dispatcher.start();
-        testing::set_contract_address(player2);
-        context.start_dispatcher.join(123456);
-
+        let player10 = contract_address_const::<'PLAYER10'>();
         // Now board is full; next start should create a new board.
-        testing::set_contract_address(player3);
+        testing::set_contract_address(player10);
+
         context.start_dispatcher.start();
         let board: Board = context.world.read_model(123456);
         // New board should now have p3 as X with ready false.
-        assert(board.x == player3, 'P3 not X');
+        assert(*board.players[0] == player10, 'P10 not X');
         assert(!board.ready, 'Flag err');
 
         let matchmaker: Matchmaker = context.world.read_model(1);
@@ -204,11 +245,10 @@ mod tests {
         // Call join() for a match id that was never created.
         context.start_dispatcher.join(999999);
         let board: Board = context.world.read_model(999999);
-        // Expect board.x remains zero address.
-        let zero_address: ContractAddress = 0.try_into().unwrap();
-        assert(board.x == zero_address, 'X zero');
-        assert(board.o == player1, 'P1 not O');
-        assert(board.ready, 'Not ready');
+
+        // Expect board.players[0] to be player 1
+        assert(*board.players[0] == player1, 'P1 not in first index');
+        assert(!board.ready, 'board is ready');
     }
 
     #[test]
@@ -222,9 +262,9 @@ mod tests {
 
         let board: Board = context.world.read_model(123456);
         // Since join() is called, board.o should be set to player1 and ready true.
-        assert(board.x == player1, 'P1 as X');
-        assert(board.o == player1, 'P1 as O');
-        assert(board.ready, 'Not ready');
+        assert(*board.players[0] == player1, 'P1 not in first index');
+        assert(*board.players[1] == player1, 'P1 not in second index');
+        assert(!board.ready, 'board is ready');
     }
 
     #[test]
@@ -242,4 +282,59 @@ mod tests {
 
         assert(match_id1 != match_id2, 'Id coll');
     }
+
+    #[test]
+    fn test_start_board_size_and_capacity() {
+        let mut context = setup_world();
+
+        // Start a new match with PLAYER1.
+        let player1 = contract_address_const::<'PLAYER1'>();
+        testing::set_contract_address(player1);
+        context.start_dispatcher.start();
+
+        // Read the board using the fixed match id 123456.
+        let board: Board = context.world.read_model(123456);
+
+        // Verify that the board's empty positions array holds 81 positions
+        // (for a 9x9 board, 9*9 = 81).
+        assert(board.empty.len() == 81, 'Board size is not 9x9');
+
+        // Initially only the starting player is added.
+        assert(board.players.len() == 1, 'Initial players count = 1');
+
+        let player2 = contract_address_const::<'PLAYER2'>();
+        let player3 = contract_address_const::<'PLAYER3'>();
+        let player4 = contract_address_const::<'PLAYER4'>();
+        let player5 = contract_address_const::<'PLAYER5'>();
+        let player6 = contract_address_const::<'PLAYER6'>();
+        let player7 = contract_address_const::<'PLAYER7'>();
+        let player8 = contract_address_const::<'PLAYER8'>();
+        let player9 = contract_address_const::<'PLAYER9'>();
+
+        // Now let additional 8 players join the match.
+        testing::set_contract_address(player2);
+        context.start_dispatcher.join(123456);
+        testing::set_contract_address(player3);
+        context.start_dispatcher.join(123456);
+        testing::set_contract_address(player4);
+        context.start_dispatcher.join(123456);
+        testing::set_contract_address(player5);
+        context.start_dispatcher.join(123456);
+        testing::set_contract_address(player6);
+        context.start_dispatcher.join(123456);
+        testing::set_contract_address(player7);
+        context.start_dispatcher.join(123456);
+        testing::set_contract_address(player8);
+        context.start_dispatcher.join(123456);
+        testing::set_contract_address(player9);
+        context.start_dispatcher.join(123456);
+
+        // Re-read the board to check updated status.
+        let board_updated: Board = context.world.read_model(123456);
+        // Now the board should have exactly 9 players.
+        assert(board_updated.players.len() == 9, 'Players count = 9');
+        // The board should be marked as ready when full.
+        assert(board_updated.ready, 'Board should be ready');
+    }
 }
+
