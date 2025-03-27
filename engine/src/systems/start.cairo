@@ -128,7 +128,7 @@ pub mod start {
                 empty: empty_board,
                 winner: zero_address,
                 active: true,
-                ready: false,
+                ready: true,
             };
 
             let player_info = Player { address: player, match_id, marks: array![], turn: false };
@@ -137,7 +137,7 @@ pub mod start {
             world.write_model(@board);
             world
                 .write_model(
-                    @Matchmaker { server: 1, last_board: match_id, last_board_ready: false },
+                    @Matchmaker { server: 1, last_board: match_id, last_board_ready: true },
                 );
             world.emit_event(@Created { match_id, server: 1 });
         }
@@ -149,6 +149,9 @@ pub mod start {
 
             let board: Board = world.read_model(match_id);
             let mut new_players = board.players;
+
+            assert(!(new_players.len() == 9), 'board is full');
+
             new_players.append(player);
             let is_ready = new_players.len() == 9;
             let new_board = Board {

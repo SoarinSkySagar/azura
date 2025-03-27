@@ -58,6 +58,8 @@ pub mod play {
 
             // Update current player's marks.
             player_info.marks.append(position);
+            world.write_model(@player_info);
+
             // Turn switching: compute next player's index.
             let mut current_index = 0;
             for i in 0..board.players.len() {
@@ -66,9 +68,9 @@ pub mod play {
                     break;
                 }
             };
+
             let next_index = (current_index + 1) % board.players.len().into();
             let next_player = board.players[next_index];
-
             let board_players = board.players.clone();
             //Update turn flags for all players.
             for p in board_players {
