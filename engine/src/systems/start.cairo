@@ -138,6 +138,7 @@ pub mod start {
             let player = get_caller_address();
             let matchmaker: Matchmaker = world.read_model(1);
             let board: Board = world.read_model(match_id);
+            assert(!board.x.is_zero(), 'Board does not exist'); // Ensure board exists
             assert(board.o.is_zero(), 'Board already has player O');
             let new_board = Board {
                 match_id,
