@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use dojo_cairo_test::WorldStorageTestTrait;
+    use dojo::model::{ModelStorage, ModelValueStorage, ModelStorageTest};
     use dojo::world::{WorldStorage, WorldStorageTrait};
     use dojo_cairo_test::{
         spawn_test_world, NamespaceDef, TestResource, ContractDefTrait, ContractDef,
@@ -10,7 +11,7 @@ mod tests {
     use engine::systems::play::{play, IPlayDispatcher, IPlayDispatcherTrait};
     use engine::systems::start::{start, IStartDispatcher, IStartDispatcherTrait};
     use engine::systems::read_board::{read_board, IReadBoardDispatcher, IReadBoardDispatcherTrait};
-    use engine::models::{m_Board, m_Player, m_Matchmaker, Position};
+    use engine::models::{m_Board, m_Player, m_Matchmaker, Position, Player};
 
     fn namespace_def() -> NamespaceDef {
         let ndef = NamespaceDef {
@@ -128,11 +129,9 @@ mod tests {
     #[test]
     fn test_read_board_after_start() {
         let mut context = setup_world();
-        // Set a test contract address for player1.
         let player1 = contract_address_const::<'PLAYER1'>();
         testing::set_contract_address(player1);
 
-        // Start a game. This creates a board with match_id = 123456.
         context.start_dispatcher.start();
 
         // Read board as the same player.
@@ -184,7 +183,6 @@ mod tests {
     #[test]
     fn test_read_board_invalid_player() {
         let mut context = setup_world();
-        // Use an address that hasn't started a game.
         let invalid_player = contract_address_const::<'INVALID'>();
         testing::set_contract_address(invalid_player);
 
@@ -208,12 +206,10 @@ mod tests {
         testing::set_contract_address(player9);
         context.play_dispatcher.mark(pos1);
 
-        // Now it should be player1's turn. Simulate a move by player1.
         let pos2 = Position { i: 1, j: 2 };
         testing::set_contract_address(player1);
         context.play_dispatcher.mark(pos2);
 
-        // Read board as player1.
         testing::set_contract_address(player1);
         let (empty_positions, all_marks) = context.board_dispatcher.read_board();
         // Expect empty positions = 79 (81-2 moves).
@@ -234,7 +230,6 @@ mod tests {
         testing::set_contract_address(player9);
         context.play_dispatcher.mark(pos);
 
-        // Read board as player1.
         testing::set_contract_address(player1);
         let (empty_positions1, all_marks1) = context.board_dispatcher.read_board();
         // Read board as player2.
@@ -258,11 +253,9 @@ mod tests {
         let pos1 = Position { i: 1, j: 1 };
         testing::set_contract_address(player9);
         context.play_dispatcher.mark(pos1);
-        // Move 2: player1.
         let pos2 = Position { i: 1, j: 2 };
         testing::set_contract_address(player1);
         context.play_dispatcher.mark(pos2);
-        // Move 3: player2.
         let pos3 = Position { i: 2, j: 1 };
         testing::set_contract_address(player2);
         context.play_dispatcher.mark(pos3);
@@ -271,7 +264,6 @@ mod tests {
         testing::set_contract_address(player3);
         context.play_dispatcher.mark(pos4);
 
-        // Now read board (using either player's perspective, here using player2).
         testing::set_contract_address(player2);
         let (empty_positions, all_marks) = context.board_dispatcher.read_board();
         // After 4 moves, expect 77 empty positions.

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { DojoProvider } from "@dojoengine/core";
 import { 
 	Account, 
@@ -14,7 +16,7 @@ export function setupWorld(provider: DojoProvider) {
 	const play_mark = async (snAccount: Account | AccountInterface, position: models.Position) => {
 		try {
 			return await provider.execute(
-				snAccount,
+				snAccount as any,
 				{
 					contractName: "play",
 					entrypoint: "mark",
@@ -42,7 +44,7 @@ export function setupWorld(provider: DojoProvider) {
 	const start_start = async (snAccount: Account | AccountInterface) => {
 		try {
 			return await provider.execute(
-				snAccount,
+				snAccount as any,
 				{
 					contractName: "start",
 					entrypoint: "start",
@@ -58,7 +60,7 @@ export function setupWorld(provider: DojoProvider) {
 	const start_startPrivate = async (snAccount: Account | AccountInterface) => {
 		try {
 			return await provider.execute(
-				snAccount,
+				snAccount as any,
 				{
 					contractName: "start",
 					entrypoint: "start_private",
@@ -74,7 +76,7 @@ export function setupWorld(provider: DojoProvider) {
 	const start_join = async (snAccount: Account | AccountInterface, matchId: BigNumberish) => {
 		try {
 			return await provider.execute(
-				snAccount,
+				snAccount as any,
 				{
 					contractName: "start",
 					entrypoint: "join",
@@ -90,7 +92,7 @@ export function setupWorld(provider: DojoProvider) {
 	const leave_leave = async (snAccount: Account | AccountInterface) => {
 		try {
 			return await provider.execute(
-				snAccount,
+				snAccount as any,
 				{
 					contractName: "leave",
 					entrypoint: "leave",

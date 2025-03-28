@@ -31,7 +31,6 @@ mod tests {
             ]
                 .span(),
         };
-
         ndef
     }
 
@@ -196,6 +195,8 @@ mod tests {
         // next player
         let player: Player = context.world.read_model(player9);
         assert(!player.turn, 'OUT OF TURN');
+        let event = play::Marked { player: player_2, position, symbol: false }; // O is false
+        context.world.emit_event_test(@event);
     }
 
     #[test]
