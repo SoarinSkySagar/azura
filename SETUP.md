@@ -133,4 +133,3 @@ Run these commands from the `/client` directory:
 - Make sure to follow the respective commands for working on either the smart contracts or the frontend.
 - Run `pnpm install` in the `/client` directory before running the frontend for the first time.
 - Ensure the code is properly building, passing tests and formatted using `pnpm run check` at the root directory before making a pull request.
-- 
