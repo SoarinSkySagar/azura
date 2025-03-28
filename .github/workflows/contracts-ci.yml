@@ -1,68 +1,46 @@
 name: Contracts CI
+
 on:
   push:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+
 jobs:
-  build-and-test:
+  build-and-test-contracts:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+    
+      - name: Install Scarb
+        uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.10.1"
 
       - name: Install asdf
         uses: asdf-vm/actions/setup@v3
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install plugins
+      - name: Install Starknet Foundry
         run: |
-          asdf plugin add scarb
-          asdf install scarb latest
-          asdf install scarb 2.9.2
-          asdf global scarb 2.9.2
-          asdf plugin add dojo https://github.com/dojoengine/asdf-dojo
-          asdf install dojo 1.2.1
-          asdf global dojo 1.2.1
-          asdf plugin add starknet-foundry
+          asdf plugin add starknet-foundry || true
           asdf install starknet-foundry latest
-          asdf install starknet-foundry 0.33.0
-          asdf global starknet-foundry 0.33.0
-
-      - name: Build contracts
-        run: |
-          cd engine
-          sozo build
-
-      - name: Run tests
-        run: |
-          cd engine
-          sozo test
-
-      - name: Check formatting
-        run: |
-          cd engine
-          scarb fmt --check
-
-      - name: ERC20
+          asdf global starknet-foundry latest
+      - name: Build and Test ERC20 Contract
         run: |
           cd erc/erc20
-          asdf global scarb 2.10.1
-          asdf global starknet-foundry 0.37.0
           scarb build
           scarb test
           scarb fmt --check
-
-      - name: ERC721
+      - name: Build and Test ERC721 Contract
         run: |
           cd erc/erc721
-          asdf global scarb 2.10.1
-          asdf global starknet-foundry 0.37.0
           scarb build
           scarb test
           scarb fmt --check

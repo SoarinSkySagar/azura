@@ -1,5 +1,5 @@
 <p align="center">
-<img src="./logo.jpg" width='200' />
+<img src="./icons/tic-tac-toe-logo.png" width='200' />
 </p>
 
 <h1 align="center">Onchain TicTacToe game utilizing Dojo Engine</h1>
