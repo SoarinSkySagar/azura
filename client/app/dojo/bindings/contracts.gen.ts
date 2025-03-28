@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { DojoProvider } from "@dojoengine/core";
 import { 
 	Account, 
@@ -12,7 +11,6 @@ import {
 import * as models from "./models.gen";
 
 export function setupWorld(provider: DojoProvider) {
-
 	const play_mark = async (snAccount: Account | AccountInterface, position: models.Position) => {
 		try {
 			return await provider.execute(
