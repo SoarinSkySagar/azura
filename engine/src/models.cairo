@@ -7,6 +7,7 @@ pub struct Matchmaker {
     pub server: u8,
     pub last_board: u32,
     pub last_board_ready: bool,
+    pub next_match_id: u32,
 }
 
 #[derive(Drop, Serde, Debug, PartialEq)]

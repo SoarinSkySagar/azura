@@ -31,7 +31,6 @@ mod tests {
             ]
                 .span(),
         };
-
         ndef
     }
 
@@ -70,39 +69,43 @@ mod tests {
         GameContext { world, play_dispatcher, start_dispatcher, board_dispatcher }
     }
 
-    fn init_default_game(dispatcher: IStartDispatcher) -> (ContractAddress, ContractAddress) {
+    fn init_default_game(context: @GameContext) -> (ContractAddress, ContractAddress, u32) {
         let player_1 = contract_address_const::<'PLAYER 1'>();
         let player_2 = contract_address_const::<'PLAYER 2'>();
 
         testing::set_contract_address(player_1);
-        let match_id: u32 = 123456;
-        dispatcher.start();
-        testing::set_contract_address(player_2);
-        dispatcher.join(match_id);
+        (*context.start_dispatcher).start();
+        let matchmaker: Matchmaker = context.world.read_model(1);
+        let match_id = matchmaker.last_board;
 
-        (player_1, player_2)
+        testing::set_contract_address(player_2);
+        (*context.start_dispatcher).join(match_id);
+
+        (player_1, player_2, match_id)
     }
 
-    /// Utility function that feigns a gameplay, allowing player 2 win
-    fn feign_win(players: Array<ContractAddress>, context: GameContext) {
-        let (mut available_positions, _, _) = context.board_dispatcher.read_board();
-
-        // make five moves for both players to win a game
-        // array pos at 1, 3 and 5 should win a game
-        let player_moves: Array<usize> = array![4, 1, 0, 2, 8];
+    fn feign_win(players: Array<ContractAddress>, context: GameContext, match_id: u32) {
         let mut current_pos = 1; // Player 2 starts
+        let player_moves: Array<Position> = array![
+            Position { i: 1, j: 1 }, // P2
+            Position { i: 1, j: 2 }, // P1
+            Position { i: 2, j: 1 }, // P2
+            Position { i: 2, j: 2 }, // P1
+            Position { i: 3, j: 1 } // P2 wins (vertical j=1)
+        ];
 
-        for move in player_moves {
+        let mut i = 0;
+        while i < player_moves.len() {
+            let position = *player_moves.at(i);
             let current_player = *players.at(current_pos);
-            let position = *available_positions.at(move);
             testing::set_contract_address(current_player);
             context.play_dispatcher.mark(position);
             current_pos = (current_pos + 1) % 2;
             println!("Player {:?}: marked at {} {}", current_player, position.i, position.j);
+            i += 1;
         };
 
-        // game ended, player 2 wins
-        let board: Board = context.world.read_model(123456);
+        let board: Board = context.world.read_model(match_id);
         assert(board.winner == *players.at(1), 'FEIGN WIN ERROR');
     }
 
@@ -111,85 +114,28 @@ mod tests {
     #[test]
     fn test_play_mark_success() {
         let mut context = setup_world();
-        let (_, player_2) = init_default_game(context.start_dispatcher);
+        let (player_1, player_2, match_id) = init_default_game(@context);
 
-        let (_, board_x, mut board_o) = context.board_dispatcher.read_board();
-        println!("Board x length: {}", board_x.len());
-        assert(board_o.len() == 0, 'INIT FAILURE');
-
-        // play, say center
         testing::set_contract_address(player_2);
         let position = Position { i: 2, j: 2 };
         context.play_dispatcher.mark(position);
-        let (_, _, mut board_o) = context.board_dispatcher.read_board();
-        assert(board_o.pop_front().unwrap() == position, '1. MARK FAILED');
-        let event = play::Marked { player: player_2, position, symbol: true };
-        context.world.emit_event_test(@event);
 
-        // next player
+        let board: Board = context.world.read_model(match_id);
         let player: Player = context.world.read_model(player_2);
+        assert(board.empty.len() == 8, 'Position not marked');
+        assert(player.marks.len() == 1, 'Mark not added');
         assert(!player.turn, 'OUT OF TURN');
+        let event = play::Marked { player: player_2, position, symbol: false }; // O is false
+        context.world.emit_event_test(@event);
     }
 
     #[test]
     fn test_play_should_allow_a_player_win() {
         let mut context = setup_world();
-        let (player_1, player_2) = init_default_game(context.start_dispatcher);
-        feign_win(array![player_1, player_2], context);
-        let event = play::Ended { match_id: 12345, winner: player_2, finished: true };
+        let (player_1, player_2, match_id) = init_default_game(@context);
+        feign_win(array![player_1, player_2], context, match_id);
+
+        let event = play::Ended { match_id, winner: player_2, finished: true };
         context.world.emit_event_test(@event);
     }
-    // #[test]
-// #[should_panic(expected: 'Match no longer Active')]
-// fn test_play_mark_should_panic_for_invalid_player() {
-//     // From the code implementation, this error message is inevitable for this scenario
-//     let context = setup_world();
-//     let (_, _) = init_default_game(context.start_dispatcher);
-
-    //     let invalid_player = contract_address_const::<'INVALID PLAYER'>();
-//     testing::set_contract_address(invalid_player);
-//     let position = Position { i: 2, j: 2 };
-//     context.play_dispatcher.mark(position);
-// }
-
-    // #[test]
-// #[should_panic(expected: 'Position already marked')]
-// fn test_play_mark_should_panic_on_already_marked_position() {
-//     let context = setup_world();
-//     let (player_1, player_2) = init_default_game(context.start_dispatcher);
-//     let position = Position { i: 2, j: 2 };
-//     testing::set_contract_address(player_2);
-//     context.play_dispatcher.mark(position);
-
-    //     testing::set_contract_address(player_1);
-//     context.play_dispatcher.mark(position); // should panic
-// }
-
-    // #[test]
-// #[should_panic(expected: 'Not your turn')]
-// fn test_play_should_panic_on_player_misturn() {
-//     let context = setup_world();
-//     let (player_1, player_2) = init_default_game(context.start_dispatcher);
-//     let position = Position { i: 2, j: 2 };
-//     testing::set_contract_address(player_2);
-//     context.play_dispatcher.mark(position);
-
-    //     let position = Position { i: 1, j: 1 };
-//     testing::set_contract_address(player_1);
-//     context.play_dispatcher.mark(position);
-
-    //     let position = Position { i: 2, j: 1 };
-//     context.play_dispatcher.mark(position);
-// }
-
-    // #[test]
-// #[should_panic(expected: 'Match no longer Active')]
-// fn test_play_should_panic_on_match_ended() {
-//     let context = setup_world();
-//     let (player_1, player_2) = init_default_game(context.start_dispatcher);
-//     feign_win(array![player_1, player_2], context);
-//     // since player 2 has won, let player 1 make a move
-//     let position = Position { i: 3, j: 1 };
-//     context.play_dispatcher.mark(position);
-// }
 }
