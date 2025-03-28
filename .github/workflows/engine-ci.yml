@@ -1,0 +1,50 @@
+name: Engine CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install asdf
+        uses: asdf-vm/actions/setup@v3
+        
+      - name: Setup Scarb 2.9.2 for Engine Contracts (Cairo 2.9.2)
+        uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.9.2"
+
+      - name: Install Dojo and Starknet Foundry using asdf
+        run: |
+          asdf plugin add dojo https://github.com/dojoengine/asdf-dojo || true
+          asdf install dojo 1.2.1 || true
+          asdf global dojo 1.2.1 || true
+          
+          asdf plugin add starknet-foundry || true
+          asdf install starknet-foundry latest
+          asdf global starknet-foundry latest
+      - name: Build Engine Contracts
+        run: |
+          cd engine
+          sozo build
+      - name: Run Engine Tests
+        run: |
+          cd engine
+          sozo test
+      - name: Check Engine Formatting
+        run: |
+          cd engine
+          scarb fmt --check
