@@ -74,13 +74,7 @@ mod tests {
         let board_dispatcher = IReadBoardDispatcher { contract_address: board_contract };
         let leave_dispatcher = ILeaveDispatcher { contract_address: leave_contract };
 
-        GameContext { 
-            world, 
-            play_dispatcher, 
-            start_dispatcher, 
-            board_dispatcher,
-            leave_dispatcher 
-        }
+        GameContext { world, play_dispatcher, start_dispatcher, board_dispatcher, leave_dispatcher }
     }
 
     fn init_default_game(context: @GameContext) -> (ContractAddress, ContractAddress, u32) {
@@ -111,19 +105,19 @@ mod tests {
 
         // Check that the game is no longer active and player O (player_2) is declared winner
         let board: Board = context.world.read_model(match_id);
-        
+
         assert(!board.active, 'Board should be inactive');
         assert(board.winner == player_2, 'Player O should win');
-        
+
         // Verify both players are reset
         let player_1_info: Player = context.world.read_model(player_1);
         let player_2_info: Player = context.world.read_model(player_2);
-        
+
         assert(player_1_info.match_id == 0, 'Player X match_id not reset');
         assert(player_2_info.match_id == 0, 'Player O match_id not reset');
         assert(player_1_info.marks.len() == 0, 'Player X marks not reset');
         assert(player_2_info.marks.len() == 0, 'Player O marks not reset');
-        
+
         // Verify that the Ended event was emitted
         let event = leave::Ended { match_id, winner: player_2, finished: false };
         context.world.emit_event_test(@event);
@@ -140,19 +134,19 @@ mod tests {
 
         // Check that the game is no longer active and player X (player_1) is declared winner
         let board: Board = context.world.read_model(match_id);
-        
+
         assert(!board.active, 'Board should be inactive');
         assert(board.winner == player_1, 'Player X should win');
-        
+
         // Verify both players are reset
         let player_1_info: Player = context.world.read_model(player_1);
         let player_2_info: Player = context.world.read_model(player_2);
-        
+
         assert(player_1_info.match_id == 0, 'Player X match_id not reset');
         assert(player_2_info.match_id == 0, 'Player O match_id not reset');
         assert(player_1_info.marks.len() == 0, 'Player X marks not reset');
         assert(player_2_info.marks.len() == 0, 'Player O marks not reset');
-        
+
         // Verify that the Ended event was emitted
         let event = leave::Ended { match_id, winner: player_1, finished: false };
         context.world.emit_event_test(@event);
@@ -176,17 +170,17 @@ mod tests {
 
         // Check that the game is no longer active and player X is declared winner
         let board: Board = context.world.read_model(match_id);
-        
+
         assert(!board.active, 'Board should be inactive');
         assert(board.winner == player_1, 'Player X should win');
-        
+
         // Verify players are reset
         let player_1_info: Player = context.world.read_model(player_1);
         let player_2_info: Player = context.world.read_model(player_2);
-        
+
         assert(player_1_info.match_id == 0, 'Player X match_id not reset');
         assert(player_2_info.match_id == 0, 'Player O match_id not reset');
-        
+
         // Verify that the Ended event was emitted with finished=false
         let event = leave::Ended { match_id, winner: player_1, finished: false };
         context.world.emit_event_test(@event);
@@ -196,11 +190,11 @@ mod tests {
     #[should_panic(expected: ('ENTRYPOINT_FAILED'))]
     fn test_leave_without_active_game() {
         let mut context = setup_world();
-        
+
         // Player that isn't in a game tries to leave
         let random_player = contract_address_const::<'RANDOM PLAYER'>();
         testing::set_contract_address(random_player);
-        
+
         // This should fail because the player isn't in a game
         context.leave_dispatcher.leave();
     }
@@ -221,18 +215,18 @@ mod tests {
 
         // Player X starts a new game
         context.start_dispatcher.start();
-        
+
         // Get the new match ID
         let matchmaker: Matchmaker = context.world.read_model(1);
         let new_match_id = matchmaker.last_board;
-        
+
         // Verify it's a different game
         assert(new_match_id != match_id, 'Should be a new match');
-        
+
         // Check that player X is properly registered in the new game
         let player_1_info: Player = context.world.read_model(player_1);
         assert(player_1_info.match_id == new_match_id, 'Player not in new match');
-        
+
         // New board should have player X and be waiting for player O
         let new_board: Board = context.world.read_model(new_match_id);
         assert(new_board.x == player_1, 'Player not X in new game');
