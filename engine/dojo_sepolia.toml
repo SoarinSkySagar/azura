@@ -1,0 +1,23 @@
+[world]
+name = "engine"
+cover_uri = "file://assets/cover.png"
+icon_uri = "file://assets/icon.png"
+website = "https://github.com/dojoengine/dojo-starter"
+seed = "engine"
+
+[world.socials]
+github = "https://github.com/SoarinSkySagar/stark-tic-tac-toe"
+telegram = "https://t.me/starktictactoe"
+
+[namespace]
+default = "engine"
+
+[env]
+rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
+# Default account for katana with seed = 0
+account_address = "0x127fd5f1fe78a71f8bcd1fec63e3fe2f0486b6ecd5c86a0466c3a21fa5cfcec"
+private_key = "0xc5b2fcab997346f3ea1c00b002ecf6f382c5f9c9659a3894eb783c5320f912"
+world_address = "0x07ae0586d1998e3b2a5ef2b711de7ac610cd8776c085d6741a563327477a1950"
+
+[writers]
+"engine" = ["engine-leave", "engine-play", "engine-read_board", "engine-start"]
