@@ -2,7 +2,7 @@
 <img src="./icons/tic-tac-toe-logo.png" width='200' />
 </p>
 
-<h1 align="center">Onchain TicTacToe game utilizing Dojo Engine</h1>
+<h1 align="center">Azura (formerly Stark TicTacToe)</h1>
 
 <p align="center">
   <a href="https://your-build-link-here">
