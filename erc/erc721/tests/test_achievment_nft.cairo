@@ -1,19 +1,25 @@
-
-use erc::achievement_nft::{AchievementNFT, IAchievementNFTDispatcher, IAchievementNFTDispatcherTrait, IAchievementNFTSafeDispatcher, IAchievementNFTSafeDispatcherTrait};
-use openzeppelin::access::ownable::interface::IOwnableDispatcher;
-use starknet::ContractAddress;
-use snforge_std::{ declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address };
-use snforge_std::{ spy_events, EventSpyAssertionsTrait };
 use core::array::ArrayTrait;
 use core::byte_array::ByteArray;
 use core::result::ResultTrait;
+use erc::achievement_nft::{
+    AchievementNFT, IAchievementNFTDispatcher, IAchievementNFTDispatcherTrait,
+    IAchievementNFTSafeDispatcher, IAchievementNFTSafeDispatcherTrait,
+};
+use openzeppelin::access::ownable::interface::IOwnableDispatcher;
+use snforge_std::{
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
+    start_cheat_caller_address, stop_cheat_caller_address,
+};
+use starknet::ContractAddress;
 
 // Test account -> Owner
 fn OWNER() -> ContractAddress {
     123.try_into().unwrap()
 }
 
-fn deploy_contract() -> (IAchievementNFTDispatcher, IOwnableDispatcher, IAchievementNFTSafeDispatcher) {
+fn deploy_contract() -> (
+    IAchievementNFTDispatcher, IOwnableDispatcher, IAchievementNFTSafeDispatcher,
+) {
     let name: ByteArray = "MyNFT";
     let symbol: ByteArray = "NFT";
     let base_uri: ByteArray = "https://example.com/";
@@ -21,15 +27,13 @@ fn deploy_contract() -> (IAchievementNFTDispatcher, IOwnableDispatcher, IAchieve
     let contract_class = declare("AchievementNFT").unwrap().contract_class();
 
     let mut constructor_args: Array<felt252> = array![];
-    
+
     name.serialize(ref constructor_args);
     symbol.serialize(ref constructor_args);
     base_uri.serialize(ref constructor_args);
     OWNER().serialize(ref constructor_args);
 
-    let (contract_address, _) = contract_class
-        .deploy(@constructor_args)
-        .unwrap();
+    let (contract_address, _) = contract_class.deploy(@constructor_args).unwrap();
 
     let acheivement_nft = IAchievementNFTDispatcher { contract_address };
     let ownable = IOwnableDispatcher { contract_address };
@@ -63,7 +67,7 @@ fn test_award_nft() {
 
     // Assert that an event was emitted
     let expected_event = AchievementNFT::Event::AchievementAwarded(
-        AchievementNFT::AchievementAwarded { recipient, token_id }
+        AchievementNFT::AchievementAwarded { recipient, token_id },
     );
     spy.assert_emitted(@array![(acheivement_nft.contract_address, expected_event)]);
 }

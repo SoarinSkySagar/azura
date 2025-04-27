@@ -2,11 +2,7 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IAchievementNFT<TContractState> {
-    fn award_nft(
-        ref self: TContractState,
-        recipient: ContractAddress,
-        token_id: u256
-    );
+    fn award_nft(ref self: TContractState, recipient: ContractAddress, token_id: u256);
 
     fn has_earned_achievement(self: @TContractState, recipient: ContractAddress) -> bool;
 
@@ -20,10 +16,10 @@ pub mod AchievementNFT {
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use starknet::ContractAddress;
-    use super::IAchievementNFT;
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
+    use super::IAchievementNFT;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -74,7 +70,7 @@ pub mod AchievementNFT {
         name: ByteArray,
         symbol: ByteArray,
         base_uri: ByteArray,
-        owner: ContractAddress
+        owner: ContractAddress,
     ) {
         self.erc721.initializer(name, symbol, base_uri);
         self.ownable.initializer(owner);
@@ -82,11 +78,7 @@ pub mod AchievementNFT {
 
     #[abi(embed_v0)]
     impl AchievementNFTImpl of IAchievementNFT<ContractState> {
-        fn award_nft(
-            ref self: ContractState,
-            recipient: ContractAddress,
-            token_id: u256
-        ) {
+        fn award_nft(ref self: ContractState, recipient: ContractAddress, token_id: u256) {
             self.ownable.assert_only_owner();
             // Check if the user has earned the achievement
             assert(self.has_earned_achievement(recipient), 'Achievement not earned');
@@ -95,17 +87,16 @@ pub mod AchievementNFT {
             self.erc721.mint(recipient, token_id);
 
             // Emit an event
-            self.emit(Event::AchievementAwarded(AchievementAwarded {
-                recipient,
-                token_id,
-            }));
+            self.emit(Event::AchievementAwarded(AchievementAwarded { recipient, token_id }));
         }
 
         fn has_earned_achievement(self: @ContractState, recipient: ContractAddress) -> bool {
             self.achievements.entry(recipient).read()
         }
 
-        fn set_achievement(ref self: ContractState, recipient: ContractAddress, has_achieved: bool) {
+        fn set_achievement(
+            ref self: ContractState, recipient: ContractAddress, has_achieved: bool,
+        ) {
             self.ownable.assert_only_owner();
             self.achievements.entry(recipient).write(has_achieved);
         }
