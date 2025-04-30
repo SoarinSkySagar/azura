@@ -7,13 +7,15 @@ interface GameStatusProps {
   isDraw: boolean;
   xIsNext: boolean;
   showWinnerAlert: string | null;
+  timeLeft?: number
 }
 
 const GameStatus: React.FC<GameStatusProps> = ({ 
   winner, 
   isDraw, 
   xIsNext, 
-  showWinnerAlert 
+  showWinnerAlert,
+  timeLeft,
 }) => {
   const { theme } = useTheme();
 
@@ -51,8 +53,25 @@ const GameStatus: React.FC<GameStatusProps> = ({
     };
   };
 
+  const getTimerStyles = () => {
+    if (theme === 'vanilla') {
+      return {
+        className: "h-6 text-base text-gray-800 dark:text-gray-100",
+        style: {}
+      };
+    }
+
+    return {
+      className: "h-6 text-sm",
+      style: {
+        color: 'var(--foreground)'
+      }
+    };
+  };
+
   const alertStyles = getAlertStyles();
   const statusStyles = getStatusStyles();
+  const timerStyles = getTimerStyles();
 
   return (
     <>
@@ -83,6 +102,10 @@ const GameStatus: React.FC<GameStatusProps> = ({
           ? "Draw!"
           : `Next player: ${xIsNext ? "X" : "O"}`}
       </motion.div>
+
+      <motion.p className={timerStyles.className} style={timerStyles.style}>
+        {xIsNext ? "X" : "O"}&apos;s Turn — Time Left: {timeLeft}s
+      </motion.p>
     </>
   );
 };
