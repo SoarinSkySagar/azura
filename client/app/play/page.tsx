@@ -161,7 +161,7 @@ const TicTacToe = () => {
     }, 1000);
   
     return () => clearInterval(interval);
-  }, [xIsNext, squares])
+  }, [xIsNext, squares, winner, isDraw])
 
   return (
     <div className="min-h-screen">
