@@ -69,6 +69,7 @@ const TicTacToe = () => {
     setSquares(Array(9).fill(null));
     setXIsNext(true);
     setShowWinnerAlert(null);
+    setTimeLeft(30);
   };
 
   useEffect(() => {
@@ -137,6 +138,31 @@ const TicTacToe = () => {
   const titleStyles = getTitleStyles();
   const resetButtonStyles = getResetButtonStyles();
 
+  const [timeLeft, setTimeLeft] = useState(30);
+
+  useEffect(() => {
+    if (winner || isDraw) return;
+    setTimeLeft(30);
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev === 1) {
+          clearInterval(interval);
+          const winnerPlayer = xIsNext ? "O" : "X";
+          setShowWinnerAlert(`Time's up! ${winnerPlayer} wins!`);
+          if (winnerPlayer === "X") {
+            setXScore((prev) => prev + 1);
+          } else {
+            setOScore((prev) => prev + 1);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [xIsNext, squares, winner, isDraw])
+
   return (
     <div className="min-h-screen">
       <div className={containerStyles.className} style={containerStyles.style}>
@@ -161,6 +187,7 @@ const TicTacToe = () => {
             isDraw={isDraw} 
             xIsNext={xIsNext} 
             showWinnerAlert={showWinnerAlert} 
+            timeLeft={timeLeft}
           />
 
           <GameScores 
