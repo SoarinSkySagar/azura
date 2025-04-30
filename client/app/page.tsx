@@ -66,7 +66,7 @@ function GameBoard() {
   );
 }
 
-function CircularGlowingEffect() {
+export function CircularGlowingEffect() {
   return (
     <div className="absolute inset-0 z-0">
       <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-full blur-3xl opacity-30 animate-pulse-glow" />
@@ -210,7 +210,7 @@ function GameButton({
   );
 }
 
-function ParticleBackground() {
+export function ParticleBackground() {
   const isClient = useClientOnly();
   if (!isClient) return null;
 
