@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { MusicProvider } from "./context/MusicContext";
+import { WalletProvider } from "./context/WalletContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { StarknetProvider } from "./components/StarknetProvider";
 import Header from "./components/Header";
@@ -35,10 +36,12 @@ export default function RootLayout({
       <Suspense fallback={<div>Loading...</div>}>
         <ThemeProvider>
           <StarknetProvider>
-            <MusicProvider>
-              <Header />
-              {children}
-            </MusicProvider>
+            <WalletProvider>
+              <MusicProvider>
+                <Header />
+                {children}
+              </MusicProvider>
+            </WalletProvider>
           </StarknetProvider>
         </ThemeProvider>
       </Suspense>

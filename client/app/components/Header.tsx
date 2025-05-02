@@ -12,7 +12,7 @@ import { constants, num } from "starknet";
 import { Chain } from "@starknet-react/chains";
 import { useClickOutside } from '@react-hookz/web';
 import { ChevronDown, Wallet } from "lucide-react";
-import ConnectWalletModal from "./ConnectWalletModal";
+import { useWallet } from "../context/WalletContext";
 
 const Header = () => {
   const { disconnect } = useDisconnect();
@@ -20,7 +20,7 @@ const Header = () => {
   const { address, status, isConnected } = useAccount();
   const [networkOpen, setNetworkOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { openWalletModal } = useWallet();
   const { switchChain } = useSwitchChain({
     params: {
       chainId: constants.StarknetChainId.SN_SEPOLIA,
@@ -54,12 +54,12 @@ const Header = () => {
                 >
                   <div className="flex items-center gap-2">
                     {chain?.network || "Network"}
-                    <ChevronDown 
+                    <ChevronDown
                       className={`w-4 h-4 transition-transform duration-200 ${networkOpen ? "rotate-180" : ""}`}
                     />
                   </div>
                 </motion.button>
-                
+
                 {networkOpen && (
                   <div className="absolute right-0 top-full mt-2 bg-purple-800 shadow-xl rounded-lg min-w-[200px] py-1 z-10 border border-purple-600">
                     {chains.map((c: Chain) => (
@@ -95,7 +95,7 @@ const Header = () => {
                     <strong className="truncate max-w-[120px]">
                       {`${address.slice(0, 6)}...${address.slice(-4)}`}
                     </strong>
-                    <ChevronDown 
+                    <ChevronDown
                       className={`w-4 h-4 transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
                     />
                   </div>
@@ -118,7 +118,7 @@ const Header = () => {
               </div>
             ) : (
               <motion.button
-                onClick={() => setIsModalOpen(true)}
+                onClick={openWalletModal}
                 className={`${buttonStyles} bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 flex items-center gap-2`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
@@ -131,11 +131,7 @@ const Header = () => {
           </div>
         </div>
       </header>
-      
-      <ConnectWalletModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
+
     </>
   );
 };

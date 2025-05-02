@@ -1,46 +1,137 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useClientOnly } from "./hooks/useClientOnly";
 import MusicToggleButton from "./components/MusicToggle";
 import { JoinRoomModal } from "./components/JoinRoomModal";
 import { useRouter } from "next/navigation";
+import { useDojoSDK } from "@dojoengine/sdk/react";
+import { useAccount } from "@starknet-react/core";
+import { useWallet } from "./context/WalletContext";
 
 export default function TicTacToeLanding() {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isJoiningGame, setIsJoiningGame] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
-  const handleCreateGame = () => {
-    console.log("Create custom game");
-  };
+  const router = useRouter();
+
+  const { client } = useDojoSDK();
+  const { account } = useAccount();
+  const { openWalletModal } = useWallet();
+
+  const handleCreateGame = useCallback(async () => {
+    console.log("Create custom game clicked");
+    setCreateError(null);
+
+    if (!client || !account) {
+      console.error("Dojo client or account not available");
+      openWalletModal();
+      return;
+    }
+
+    setIsCreatingGame(true);
+
+    try {
+      console.log("Executing start_start transaction...");
+      console.log("client.actions: ", client);
+      const tx = await client.start.start(account);
+
+      console.log("Waiting for transaction confirmation:", tx.transaction_hash);
+      if (client.provider) {
+        await client.provider.waitForTransaction(tx.transaction_hash);
+        console.log("Transaction confirmed!");
+      } else {
+        console.warn("Provider not found on client, skipping wait for transaction confirmation.");
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log("Assuming transaction confirmed after timeout.");
+      }
+
+      console.log("Game created or joined successfully! Transaction hash:", tx.transaction_hash);
+      router.push('/play');
+
+    } catch (error) {
+      console.error("Failed to create game:", error);
+      setCreateError(`Failed to create game: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsCreatingGame(false);
+    }
+  }, [client, account, router, openWalletModal]);
 
   const handleJoinGame = () => {
+    setJoinError(null);
     setIsJoinModalOpen(true);
   };
 
-  const handleJoinRoomSubmit = (roomId: string) => {
+  const handleJoinRoomSubmit = useCallback(async (roomId: string) => {
     console.log("Joining room:", roomId);
-    setIsJoinModalOpen(false);
-  };
+    setJoinError(null);
+
+    if (!client || !account) {
+      console.error("Dojo client or account not available");
+      openWalletModal();
+      return;
+    }
+
+    if (!roomId || isNaN(parseInt(roomId))) {
+        setJoinError("Invalid Room ID. Please enter a number.");
+        return;
+    }
+
+    setIsJoiningGame(true);
+
+    try {
+      console.log(`Executing start.join transaction for match ID: ${roomId}...`);
+      const tx = await client.start.join(account, BigInt(roomId));
+
+      console.log("Waiting for join transaction confirmation:", tx.transaction_hash);
+      if (client.provider) {
+        await client.provider.waitForTransaction(tx.transaction_hash);
+        console.log("Join transaction confirmed!");
+      } else {
+        console.warn("Provider not found on client, skipping wait for transaction confirmation.");
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+
+      console.log("Joined game successfully! Transaction hash:", tx.transaction_hash);
+      setIsJoinModalOpen(false);
+      router.push('/play');
+
+    } catch (error) {
+      console.error("Failed to join game:", error);
+      setJoinError(`Failed to join game: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsJoiningGame(false);
+    }
+  }, [client, account, router, openWalletModal]);
 
   const handleRandomMatch = () => {
     console.log("Random matchmaking");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a0b2e] via-[#1a0b2e] to-[#2c1250] text-white flex flex-col md:flex-row items-center justify-center p-4 md:space-x-12 lg:space-x-44">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a0b2e] via-[#1a0b2e] to-[#2c1250] text-white flex flex-col md:flex-row items-center justify-center p-4 md:space-x-12 lg:space-x-44 relative overflow-hidden">
       <ParticleBackground />
       <GameBoard />
       <GameControls
         handleCreateGame={handleCreateGame}
         handleJoinGame={handleJoinGame}
         handleRandomMatch={handleRandomMatch}
+        isCreatingGame={isCreatingGame}
+        createError={createError}
+        isJoiningGame={isJoiningGame}
+        joinError={joinError}
       />
       <MusicToggleButton />
-      <JoinRoomModal 
-        isOpen={isJoinModalOpen} 
-        onClose={() => setIsJoinModalOpen(false)} 
+      <JoinRoomModal
+        isOpen={isJoinModalOpen}
+        onClose={() => { setIsJoinModalOpen(false); setJoinError(null); }}
         onJoin={handleJoinRoomSubmit}
+        isLoading={isJoiningGame}
+        error={joinError}
       />
     </div>
   );
@@ -131,15 +222,27 @@ function GameControls({
   handleCreateGame,
   handleJoinGame,
   handleRandomMatch,
+  isCreatingGame,
+  createError,
+  isJoiningGame,
+  joinError,
 }: {
   handleCreateGame: () => void;
   handleJoinGame: () => void;
   handleRandomMatch: () => void;
+  isCreatingGame: boolean;
+  createError: string | null;
+  isJoiningGame: boolean;
+  joinError: string | null;
 }) {
   const router = useRouter();
 
+  const commonButtonProps = {
+    disabled: isCreatingGame || isJoiningGame,
+  };
+
   return (
-    <div className="mt-8 md:mt-0 z-10">
+    <div className="mt-8 md:mt-0 z-10 w-full max-w-md flex flex-col items-center md:items-start">
       <motion.h1
         className="text-5xl sm:text-7xl font-bold mb-4 text-center md:text-left "
         initial={{ opacity: 0, y: -50 }}
@@ -152,7 +255,7 @@ function GameControls({
       </motion.h1>
 
       <motion.p
-        className="text-xl sm:text-2xl mb-8 text-purple-300 text-center md:text-left ml-10"
+        className="text-xl sm:text-2xl mb-8 text-purple-300 text-center md:text-left"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
@@ -160,16 +263,27 @@ function GameControls({
         Classic game, modern twist
       </motion.p>
 
-      <div className="space-y-4 w-full max-w-lg">
+      {(createError || joinError) && (
+        <motion.p
+          className="text-red-400 text-sm text-center w-full mb-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {createError || joinError}
+        </motion.p>
+      )}
+
+      <div className="space-y-4 w-full">
         <GameButton
           onClick={handleCreateGame}
-          className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+          className={`bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700`}
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
           aria-label="Create Room"
+          disabled={commonButtonProps.disabled}
         >
-          Create Room
+          {isCreatingGame ? "Creating..." : "Create Room"}
         </GameButton>
 
         <GameButton
@@ -179,6 +293,7 @@ function GameControls({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
           aria-label="Join Room"
+          disabled={commonButtonProps.disabled}
         >
           Join Room
         </GameButton>
@@ -190,6 +305,7 @@ function GameControls({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9, duration: 0.5 }}
           aria-label="Play Random Match"
+          disabled={commonButtonProps.disabled}
         >
           Play
         </GameButton>
@@ -201,6 +317,7 @@ function GameControls({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.1, duration: 0.5 }}
           aria-label="Stake STRK Tokens"
+          disabled={commonButtonProps.disabled}
         >
           Stake STRK
         </GameButton>
@@ -212,25 +329,50 @@ function GameControls({
 function GameButton({
   children,
   className,
-  ...props
-}: React.ComponentProps<typeof motion.button>) {
+  disabled,
+  onClick,
+  initial,
+  animate,
+  transition,
+  "aria-label": ariaLabel,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
+  onClick?: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initial?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  animate?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transition?: any;
+  "aria-label"?: string;
+}) {
   return (
-    <motion.button
-      className={`w-full py-3 px-6 text-white rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50 font-bold text-xl shadow-lg ${className}`}
-      {...props}
+    <motion.div
+      initial={initial}
+      animate={animate}
+      transition={transition}
+      className="w-full"
     >
-      {children}
-    </motion.button>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`w-full py-3 px-6 text-white rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50 font-bold text-xl shadow-lg ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        aria-label={ariaLabel}
+      >
+        {children}
+      </button>
+    </motion.div>
   );
 }
 
 function ParticleBackground() {
   const isClient = useClientOnly();
-  if (!isClient) return null;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(50)].map((_, i) => (
+      {isClient && [...Array(50)].map((_, i) => (
         <Particle key={i} />
       ))}
     </div>
@@ -238,36 +380,53 @@ function ParticleBackground() {
 }
 
 function Particle() {
-  const randomPosition = () => ({
-    x: Math.random() * window.innerWidth,
-    y: Math.random() * window.innerHeight,
-  });
+  const randomPosition = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return { x: 0, y: 0 };
+    }
+    return {
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+    }
+  }, []);
 
-  const [position, setPosition] = useState(randomPosition);
+  const [position, setPosition] = useState(() => randomPosition());
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPosition(randomPosition());
-    }, Math.random() * 10000 + 5000);
+    if (typeof window !== 'undefined') {
+        const interval = setInterval(() => {
+          setPosition(randomPosition());
+        }, Math.random() * 10000 + 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+        return () => clearInterval(interval);
+    }
+  }, [randomPosition]);
+
+  const isClient = useClientOnly();
+  if (!isClient) {
+     return null;
+  }
 
   return (
     <motion.div
       className="absolute w-1 h-1 bg-white rounded-full"
-      style={{
-        left: position.x,
-        top: position.y,
+      initial={{
+        x: position.x,
+        y: position.y,
+        opacity: 0,
+        scale: 0,
       }}
       animate={{
+        x: position.x,
+        y: position.y,
         scale: [1, 1.5, 1],
         opacity: [0.2, 0.8, 0.2],
       }}
       transition={{
-        duration: Math.random() * 2 + 1,
-        repeat: Number.POSITIVE_INFINITY,
-        ease: "easeInOut",
+        x: { duration: Math.random() * 5 + 5, ease: "linear" },
+        y: { duration: Math.random() * 5 + 5, ease: "linear" },
+        scale: { duration: Math.random() * 2 + 1, repeat: Infinity, ease: "easeInOut" },
+        opacity: { duration: Math.random() * 2 + 1, repeat: Infinity, ease: "easeInOut" }
       }}
     />
   );

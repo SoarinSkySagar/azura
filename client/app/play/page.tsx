@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import GameBoard from './components/GameBoard';
 import GameScores from './components/GameScores';
 import GameStatus from './components/GameStatus';
 import { useTheme } from '../components/ThemeProvider';
+import { useAccount } from "@starknet-react/core";
+import { dojoConfig } from "../dojo/dojo.config";
 
 const TicTacToe = () => {
   const [squares, setSquares] = useState<(string | null)[]>(
@@ -15,12 +17,95 @@ const TicTacToe = () => {
   const [xScore, setXScore] = useState(0);
   const [oScore, setOScore] = useState(0);
   const [showWinnerAlert, setShowWinnerAlert] = useState<string | null>(null);
+  const [matchId, setMatchId] = useState<number | null>(null);
   const { theme } = useTheme();
+  const { account } = useAccount();
+
+  const [loading, setLoading] = useState(false);
+
+  // Define the PlayerEdge type outside the function to avoid recreation
+  type PlayerEdge = {
+    node: {
+      address: string;
+      marks: { i: number; j: number }[];
+      turn: boolean;
+      match_id: number;
+    }
+  };
+
+  const fetchPlayerData = useCallback(async () => {
+    if (!account?.address) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const query = `
+        query {
+          enginePlayerModels {
+            edges {
+              node {
+                address
+                marks {
+                  i
+                  j
+                }
+                turn
+                match_id
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await fetch(`${dojoConfig.toriiUrl}/graphql`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.errors) {
+        throw new Error(result.errors[0].message);
+      }
+
+      if (result.data?.enginePlayerModels?.edges?.length > 0) {
+        const edges = result.data.enginePlayerModels.edges;
+
+        const playerNode = edges.find(
+          (edge: PlayerEdge) => edge.node.address === account?.address
+        );
+
+        if (playerNode?.node && playerNode.node.match_id !== undefined) {
+          setMatchId(Number(playerNode.node.match_id));
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching player data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [account?.address, setLoading, setMatchId]);
+
+  useEffect(() => {
+    if (account?.address) {
+      fetchPlayerData();
+    }
+  }, [account?.address, fetchPlayerData]);
+
 
   const calculateWinner = (squares: (string | null)[]) => {
     // Rows
     const lines = [];
-    
+
     // Horizontal lines (rows)
     for (let row = 0; row < 9; row++) {
       for (let col = 0; col <= 4; col++) {
@@ -28,7 +113,7 @@ const TicTacToe = () => {
         lines.push([start, start + 1, start + 2, start + 3, start + 4]);
       }
     }
-    
+
     // Vertical lines (columns)
     for (let col = 0; col < 9; col++) {
       for (let row = 0; row <= 4; row++) {
@@ -36,7 +121,7 @@ const TicTacToe = () => {
         lines.push([start, start + 9, start + 18, start + 27, start + 36]);
       }
     }
-    
+
     // Diagonal lines (top-left to bottom-right)
     for (let row = 0; row <= 4; row++) {
       for (let col = 0; col <= 4; col++) {
@@ -44,7 +129,7 @@ const TicTacToe = () => {
         lines.push([start, start + 10, start + 20, start + 30, start + 40]);
       }
     }
-    
+
     // Diagonal lines (top-right to bottom-left)
     for (let row = 0; row <= 4; row++) {
       for (let col = 4; col < 9; col++) {
@@ -114,7 +199,7 @@ const TicTacToe = () => {
   const getContainerStyles = () => {
     if (theme === 'vanilla') {
       return {
-        className: "bg-gradient-to-br from-orange-300 via-amber-300 to-yellow-400 dark:from-[#0a192f] dark:via-[#0a192f] dark:to-[#112240] text-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen",
+        className: "bg-gradient-to-br from-orange-300 via-amber-300 to-yellow-400 dark:from-[#0a192f] dark:via-[#0a192f] dark:to-[#112240] text-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen pt-20",
         style: {}
       };
     }
@@ -181,22 +266,34 @@ const TicTacToe = () => {
             Get 5 in a row to win!
           </p>
 
-          <GameBoard 
-            squares={squares} 
-            onClick={handleClick} 
-            winner={winner} 
+          {matchId !== null && (
+            <div className="text-center mb-4 p-2 bg-opacity-80 rounded-lg bg-gray-100 dark:bg-gray-800">
+              <p className="font-semibold">Room ID: {matchId}</p>
+            </div>
+          )}
+
+          {loading && (
+            <div className="text-center mb-4">
+              <p>Loading room information...</p>
+            </div>
+          )}
+
+          <GameBoard
+            squares={squares}
+            onClick={handleClick}
+            winner={winner}
           />
 
-          <GameStatus 
-            winner={winner} 
-            isDraw={isDraw} 
-            xIsNext={xIsNext} 
-            showWinnerAlert={showWinnerAlert} 
+          <GameStatus
+            winner={winner}
+            isDraw={isDraw}
+            xIsNext={xIsNext}
+            showWinnerAlert={showWinnerAlert}
           />
 
-          <GameScores 
-            xScore={xScore} 
-            oScore={oScore} 
+          <GameScores
+            xScore={xScore}
+            oScore={oScore}
           />
 
           <motion.button
