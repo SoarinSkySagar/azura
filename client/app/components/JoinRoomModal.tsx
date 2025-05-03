@@ -9,12 +9,16 @@ interface ModalProps {
 
 interface JoinRoomModalProps extends ModalProps {
   onJoin: (roomId: string) => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
-export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onJoin 
+export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
+  isOpen,
+  onClose,
+  onJoin,
+  isLoading = false,
+  error = null
 }) => {
   const [roomId, setRoomId] = useState("");
 
@@ -30,7 +34,8 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
       return;
     }
     onJoin(roomId);
-    handleClose();
+    // Don't close the modal here, let the parent component handle it
+    // after the join operation completes successfully
   };
 
   if (!isOpen) return null;
@@ -47,7 +52,7 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className="relative z-10 bg-gradient-to-br from-[#1a0b2e] via-[#1a0b2e] to-[#2c1250] rounded-2xl shadow-2xl border-2 border-purple-700 p-8 w-full max-w-md overflow-hidden"
       >
-        
+
         {/* Close Button */}
         <button
           onClick={handleClose}
@@ -80,6 +85,13 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
               />
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="text-red-400 text-sm text-center">
+                {error}
+              </div>
+            )}
+
             {/* Buttons */}
             <div className="flex space-x-4">
               <motion.button
@@ -88,6 +100,7 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex-1 py-3 bg-purple-800 text-purple-300 rounded-xl flex items-center justify-center space-x-2 hover:bg-purple-700 transition-colors"
+                disabled={isLoading}
               >
                 <X size={20} />
                 <span>Cancel</span>
@@ -97,9 +110,10 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl flex items-center justify-center space-x-2 hover:from-pink-600 hover:to-purple-700 transition-all"
+                disabled={isLoading}
               >
-                <Circle size={20} />
-                <span>Join</span>
+                <Circle size={20} className={isLoading ? "animate-spin" : ""} />
+                <span>{isLoading ? "Joining..." : "Join"}</span>
               </motion.button>
             </div>
           </form>
